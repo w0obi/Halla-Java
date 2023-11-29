@@ -262,7 +262,7 @@ public class ClientChat extends JFrame implements ActionListener {
                 break;
             case "NoteS":
                 String note = st.nextToken();
-                JOptionPane.showMessageDialog(null, note, title, JOptionPane.CLOSED_OPTION);
+                showMessageBox(note, message + "'note");
                 break;
         }
     }
