@@ -232,7 +232,7 @@ public class Server1205 extends JFrame implements ActionListener {
          else if ("CreateRoom".equals(protocol)) {
             handleCreateRoomProtocol(message);
          }
-      }ㄴ
+      }
       
       private void handleNoteProtocol(StringTokenizer st, String message) {
          String note = st.nextToken();
