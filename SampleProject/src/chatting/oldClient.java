@@ -1,4 +1,5 @@
-package Client;
+package chatting;
+
 
 
 import java.awt.EventQueue;
@@ -10,7 +11,7 @@ import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import java.awt.Font;
 
-public class Client {
+public class oldClient {
 
    private JFrame frame;
    private JTextField textField;
@@ -24,7 +25,7 @@ public class Client {
       EventQueue.invokeLater(new Runnable() {
          public void run() {
             try {
-               Client window = new Client();
+               oldClient window = new oldClient();
                window.frame.setVisible(true);
             } catch (Exception e) {
                e.printStackTrace();
@@ -36,7 +37,7 @@ public class Client {
    /**
     * Create the application.
     */
-   public Client() {
+   public oldClient() {
       initialize();
    }
 
@@ -51,7 +52,7 @@ public class Client {
       frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
       frame.getContentPane().setLayout(null);
       
-      ImageIcon im = new ImageIcon("C:/JavaLanguage/람쥐1.jpg");
+      ImageIcon im = new ImageIcon("C:\\Users\\hakyp\\Documents\\카카오톡 받은 파일\\네트워크프로그래밍\\람쥐1.jpg");
       JLabel laim = new JLabel(im);//라벨에 이미지 달아주기
       laim.setBounds(0, 0, 550, 310);
       frame.getContentPane().add(laim);

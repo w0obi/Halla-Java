@@ -1,0 +1,325 @@
+package server;
+
+import java.awt.Font;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.net.ServerSocket;
+import java.net.Socket;
+import java.util.StringTokenizer;
+import java.util.Vector;
+
+import javax.swing.JButton;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTextArea;
+import javax.swing.JTextField;
+import javax.swing.border.EmptyBorder;
+
+// import server.ServerBook.RoomInfo;
+// import server.ServerBook.UserInfo;
+
+public class Server1128 extends JFrame implements ActionListener {
+   // SUID는 개발자가 직접 선언하고 관리
+   private static final long serialVersionUID = 1L;
+   private JPanel contentPane;
+   private JTextField port_tf;
+   private JTextArea textArea = new JTextArea();
+   private JButton start_btn = new JButton("서버 실행");
+   private JButton stop_btn = new JButton("서버 중지");
+
+   // socket 생성 연결 부분
+   private ServerSocket ss; // server socket
+   private Socket cs;      //client socket
+   int port = 12345;
+
+   // 기타 변수 관리
+   // ClientInfo 클래스 객체만 다루는 벡터, 타입설정 clientVC객체만 사용가능
+   private Vector<ClientInfo> clientVC = new Vector<ClientInfo>();
+   private Vector<RoomInfo> roomVC = new Vector<RoomInfo>();
+   
+   
+   public Server1128() {
+      // GUI 초기화 메소드 호출
+      initializeGUI();
+      setupActionListeners();
+   }
+
+   public void initializeGUI() {
+      setTitle("Server Application");
+      // 프레임 닫을 때 종료 옵션 설정
+      setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+      // 프레임 위치와 크기 설정
+      setBounds(30, 100, 321, 370);
+      // 패널을 생성
+      contentPane = new JPanel();
+      // 가장 자리 여백 설정
+      contentPane.setBorder(new EmptyBorder(5, 5, 5, 5));
+      setContentPane(contentPane);
+      // 패널의 레이아웃을 null로 설정하여 컴포넌트 위치를 직접 설정
+      contentPane.setLayout(null);
+
+      JLabel lblNewLabel_2 = new JLabel("포트 번호");
+      lblNewLabel_2.setBounds(12, 245, 57, 15);
+      // "포트 번호"라는 라벨을 프레임에 추가
+      contentPane.add(lblNewLabel_2);
+
+      // 포트 번호 입력 텍스트 필드
+      port_tf = new JTextField();
+      port_tf.setBounds(81, 242, 212, 21);
+      contentPane.add(port_tf);
+      // 텍스트 필드의 크기 지정, 크기 내에서 표시 가능한 문자 10으로 제한, 텍스트 길이 제한 및 레이아웃 제어
+      port_tf.setColumns(10);
+
+      start_btn.setBounds(12, 286, 138, 23);
+      contentPane.add(start_btn);
+
+      JScrollPane scrollPane = new JScrollPane();
+      scrollPane.setBounds(12, 10, 281, 210);
+      contentPane.add(scrollPane);
+
+      // 데이터가 아래로 내려갈 경우에 아래로 자동으로 내려감
+      // scrollPane의 Viewport(가시영역)보다 큰 경우에 활성화
+      scrollPane.setViewportView(textArea);
+      // 실행시 textArea edit 금지
+      textArea.setEditable(false);
+
+      stop_btn.setBounds(155, 286, 138, 23);
+      contentPane.add(stop_btn);
+      //stop_btn.setEnabled(false);
+
+      this.setVisible(true); // 화면 보이기, 화면 제어를 자식창에게 위임, 부모창은 제어할 수 없음
+   }
+
+   void setupActionListeners() {
+      // Action 이벤트 리스너 달기
+      start_btn.addActionListener(this);
+      // 리스너 등록
+      stop_btn.addActionListener(this);
+   }
+
+   @Override
+   // ActionListener인터페이스의 추상메소드, Action 이벤트가 발생하는 경우에 호출됨.
+   public void actionPerformed(ActionEvent e) {
+      // 이벤트가 start_btn이라면
+      if (e.getSource() == start_btn) {
+         System.out.println("start button clicked");
+         startServer();
+
+      // 이벤트가 stop_btn이라면
+      } else if (e.getSource() == stop_btn) {
+         System.out.println("stop button clicked");
+         stopServer();
+      }
+   }
+
+   private void startServer() {
+      try {
+         // 현재 텍스트 필드에 입력된 문자열을 알아냄
+         port = Integer.parseInt(port_tf.getText().trim());
+         ss = new ServerSocket(port);
+         // textArea에 추가
+         textArea.append("Server started on port: " + port + "\n");
+         waitForClientConnection();
+         // 잘못된 포트 번호 입력 예외 처리
+      } catch (NumberFormatException e) {
+         textArea.append("Invalid port number.\n");
+         // 입출력 에러 예외 처리, Address already in use: bind
+      } catch (IOException e) {
+         textArea.append("Error starting server: " + e.getMessage() + "\n");
+      }
+   }
+
+   private void stopServer() {
+      try {
+         // 서버 소켓이 닫혀있으면 true 반환
+         if (ss != null && !ss.isClosed()) {
+            // 서버 응용프로그램 종료
+            ss.close(); 
+            textArea.append("Server stopped.\n");
+         }
+      } catch (IOException e) {
+         textArea.append("Error stopping server: " + e.getMessage() + "\n");
+      }
+   }
+
+   private void waitForClientConnection() {
+      new Thread(() -> {
+         try {
+            while (true) {
+               // 클라이언트의 접속을 기다림 textArea에 추가
+               textArea.append("Waiting for client connections...\n");
+               // 서버는 accept() 메소드를 호출하여 클라이언트의 접속을 기다림, 전용 클라이언트 소켓 생성
+               cs = ss.accept();         //cs를 분실하면 클라이언트와 통신이 불가능
+               // 클라이언트가 연결됨 textArea에 추가
+               textArea.append("Client connected.\n");
+               ClientInfo client = new ClientInfo(cs);
+               client.start();
+            }
+         } catch (IOException e) {
+            // 클라이언트와 연결할 수 없음,  Socket closed
+            textArea.append("Error accepting client connection: " + e.getMessage() + "\n");
+         }
+      }).start();
+   }
+
+   class ClientInfo extends Thread {
+      private DataInputStream dis;
+      private DataOutputStream dos;
+
+      // 공유할 데이터 선언
+      private Socket clientSocket;
+      
+      private String clientID = ""; // client ID
+      private String roomID = "";
+
+      // 부모로부터 초기데이터 받을 생성자 선언
+      public ClientInfo(Socket socket) {
+         // socket 객체를 clientSocket에 복사
+         this.clientSocket = socket;
+         clientCom();
+      }
+
+      private void clientCom() {
+         try {
+            // 클라이언트와 데이터를 주고받기 위한 입출력 스트림을 생성
+            dis = new DataInputStream(clientSocket.getInputStream());
+            dos = new DataOutputStream(clientSocket.getOutputStream());
+
+            clientID = dis.readUTF(); // 클라이언트로부터 ID 수신
+            textArea.append("new Client: " + clientID + "\n");
+
+            // 기존 클라이언트 (그룹)정보를 새로운 클라이언트에게 알림(전달)
+            for (int i = 0; i < clientVC.size(); i++) {
+               // 벡터의 i번째 요소를 얻어냄
+               ClientInfo c = clientVC.elementAt(i);
+               textArea.append("OldClient/: " + c.clientID + "\n");
+               sendMsg("OldClient/" + c.clientID);
+            }
+
+            // 새 클라이언트 정보를 기존 클라이언트들에게 알림 ( 가입인사)
+            broadcastMsg("NewClient/" + clientID);
+
+            clientVC.add(this); // 신규 클라이언트 등록
+         } catch (IOException e) {
+            textArea.append("Error in communication: " + e.getMessage() + "\n");
+         }
+      }
+
+      private void broadcastMsg(String msg) {
+         // 변수 : 배열레퍼런스
+         for (ClientInfo client : clientVC) {
+            client.sendMsg(msg);
+         }
+      }
+
+      void sendMsg(String msg) {
+         try {
+            dos.writeUTF(msg);
+         } catch (IOException e) {
+         }
+      }
+
+      // 클라이언트로부터 데이터 수신
+      public void run() {
+         while (true) {
+            recvMsg();
+         }
+      }
+
+      public void recvMsg() {
+         String str = "";
+         try {
+            str = dis.readUTF();
+         } catch (IOException e) {
+            e.printStackTrace();
+         }
+         textArea.append(clientID + "사용자로부터 수신한 메시지: " + str + "\n");
+
+         // 구분 문자(delimiter) : 문자열을 구분하기 위해 사용
+         // 토큰(token) : 구분 문자로 분리된 문자열
+         StringTokenizer st = new StringTokenizer(str, "/");
+         // 토큰 얻기
+         String protocol = st.nextToken();
+         String message = st.nextToken();
+
+         //log("프로토콜: " + protocol);
+         //log("내용: " + message);
+         
+         if ("Note".equals(protocol)) {
+            handleNoteProtocol(st, message);
+         } else if ("CreateRoom".equals(protocol)) {
+            handleCreateRoomProtocol(message);
+         }
+
+      }
+      
+      private void handleNoteProtocol(StringTokenizer st, String message) {
+         // 다음 토큰 리턴
+         String note = st.nextToken();
+
+         // 해당 사용자에게 쪽지 전송
+         for (ClientInfo u : clientVC) {
+            if (u.clientID.equals(message)) {
+               u.sendMsg("NoteS/" + clientID + "/" + note);
+               break;
+            }
+         }
+      }
+
+      private void handleCreateRoomProtocol(String roomName) {
+
+         RoomInfo r = new RoomInfo(roomName, this);
+         roomVC.add(r);
+         roomID = roomName;
+         sendMsg("CreateRoom/" + roomName);     // 생성 요청자에게 알림
+         broadCast("New_Room/" + roomName);     // 모두에게 알림
+         
+      }
+      
+      private void broadCast(String str) {
+         for (ClientInfo c : clientVC) {
+            c.sendMsg(str);
+         }
+      }
+
+      private void log(String message) {
+         System.out.println(clientID + ": " + message);
+      }
+
+      // 오류 로그 출력
+      private void logError(String message, Exception e) {
+         System.err.println(clientID + ": " + message);
+         e.printStackTrace();
+      }
+   }
+   
+   class RoomInfo {                                                             // 방에 있는 회원 관리
+      private String roomName = "";
+      
+      // ClientInfo 클래스 객체만 다루는 벡터, 타입설정 RoomClientVC객체만 사용가능
+      private Vector<ClientInfo> RoomClientVC = new Vector<ClientInfo>();
+
+      public RoomInfo(String name, ClientInfo c) {
+         this.roomName = name;
+         this.RoomClientVC.add(c);
+      }
+
+      public void broadcastRoomMsg(String message) {
+         for (ClientInfo c : RoomClientVC) {                                    // 방에 있는 회원에게 전송
+            c.sendMsg(message);
+         }
+      }
+   }
+
+   public static void main(String[] args) {
+      new Server1128();
+   }
+}

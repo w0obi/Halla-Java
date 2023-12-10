@@ -1,4 +1,5 @@
-package Server;
+package chatting;
+
 
 
 import java.awt.Font;
@@ -10,11 +11,11 @@ import javax.swing.JLabel;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
 
-public class Server extends JFrame {
+public class oldServer extends JFrame {
     private JFrame frame;
     private JTextField port_tf;
     
-    public Server() {
+    public oldServer() {
         init_GUI();
     }
     
@@ -51,6 +52,6 @@ public class Server extends JFrame {
     }
     
     public static void main(String[] args) {
-        new Server();
+        new oldServer();
     }
 }

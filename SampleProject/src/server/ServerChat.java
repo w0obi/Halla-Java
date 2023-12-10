@@ -74,7 +74,7 @@ public class ServerChat extends JFrame implements ActionListener {
 
       stop_btn.setBounds(155, 286, 138, 23);
       contentPane.add(stop_btn);
-      stop_btn.setEnabled(false);
+      //stop_btn.setEnabled(false);
 
       this.setVisible(true); // 화면 보이기
    }

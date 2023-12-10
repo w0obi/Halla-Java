@@ -1,6 +1,6 @@
 package server;
 
-import java.awt.Font;
+import java.awt.Font; 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.DataInputStream;
@@ -23,10 +23,10 @@ import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.border.EmptyBorder;
 
-// import server.ServerBook.RoomInfo;
-// import server.ServerBook.UserInfo;
+//import server.ServerBook.RoomInfo;
+//import server.ServerBook.UserInfo;
 
-public class Server1128 extends JFrame implements ActionListener {
+public class Server1205 extends JFrame implements ActionListener {
    private static final long serialVersionUID = 1L;
    private JPanel contentPane;
    private JTextField port_tf;
@@ -35,18 +35,17 @@ public class Server1128 extends JFrame implements ActionListener {
    private JButton stop_btn = new JButton("서버 중지");
 
    // socket 생성 연결 부분
-   private ServerSocket ss; // server socket
-   private Socket cs;      //client socket
-   int port = 12345;
+   private ServerSocket ss;   // server socket
+   private Socket cs;         // client socket
+   int port = 12345;          // Default PortNum
 
    // 기타 변수 관리
    private Vector<ClientInfo> clientVC = new Vector<ClientInfo>();
    private Vector<RoomInfo> roomVC = new Vector<RoomInfo>();
    
-   
-   public Server1128() {
+   public Server1205() {
       initializeGUI();
-      setupActionListeners(); // 11-13
+      setupActionListeners();
    }
 
    public void initializeGUI() {
@@ -56,6 +55,7 @@ public class Server1128 extends JFrame implements ActionListener {
       setBounds(30, 100, 321, 370);
       contentPane = new JPanel();
       contentPane.setBorder(new EmptyBorder(5, 5, 5, 5));
+      setLocationRelativeTo(null);
       setContentPane(contentPane);
       contentPane.setLayout(null);
 
@@ -80,7 +80,7 @@ public class Server1128 extends JFrame implements ActionListener {
 
       stop_btn.setBounds(155, 286, 138, 23);
       contentPane.add(stop_btn);
-      //stop_btn.setEnabled(false);
+      stop_btn.setEnabled(false);
 
       this.setVisible(true); // 화면 보이기
    }
@@ -92,7 +92,6 @@ public class Server1128 extends JFrame implements ActionListener {
 
    @Override
    public void actionPerformed(ActionEvent e) {
-      // TODO Auto-generated method stub
       if (e.getSource() == start_btn) {
          System.out.println("start button clicked");
          startServer(); // 11-13
@@ -109,9 +108,11 @@ public class Server1128 extends JFrame implements ActionListener {
          ss = new ServerSocket(port);
          textArea.append("Server started on port: " + port + "\n");
          waitForClientConnection();
-      } catch (NumberFormatException e) {
+      } 
+      catch (NumberFormatException e) {
          textArea.append("Invalid port number.\n");
-      } catch (IOException e) {
+      } 
+      catch (IOException e) {
          textArea.append("Error starting server: " + e.getMessage() + "\n");
       }
    }
@@ -130,26 +131,28 @@ public class Server1128 extends JFrame implements ActionListener {
    private void waitForClientConnection() {
       new Thread(() -> {
          try {
-            while (true) {            //11-22
+            while (true) {
                textArea.append("Waiting for client connections...\n");
                cs = ss.accept();         //cs를 분실하면 클라이언트와 통신이 불가능
                textArea.append("Client connected.\n");
                ClientInfo client = new ClientInfo(cs);
                client.start();
             }
-         } catch (IOException e) {
+         }
+         
+         catch (IOException e) {
             textArea.append("Error accepting client connection: " + e.getMessage() + "\n");
          }
       }).start();
    }
 
-   class ClientInfo extends Thread { // 11-21
+   class ClientInfo extends Thread {
       private DataInputStream dis;
       private DataOutputStream dos;
 
       private Socket clientSocket;
-      private String clientID = ""; // client ID
-      private String roomID = "";      //11-28
+      private String clientID = "";    // client ID
+      private String roomID = "";       //   11-28
 
       public ClientInfo(Socket socket) {
          this.clientSocket = socket;
@@ -164,18 +167,24 @@ public class Server1128 extends JFrame implements ActionListener {
             clientID = dis.readUTF(); // 클라이언트로부터 ID 수신
             textArea.append("new Client: " + clientID + "\n");
 
-            // 기존 클라이언트 (그룹)정보를 새로운 클라이언트에게 알림(전달)
+            // 기존 클라이언트 정보를 새로운 클라이언트에게 알림
             for (int i = 0; i < clientVC.size(); i++) {
                ClientInfo c = clientVC.elementAt(i);
                textArea.append("OldClient/: " + c.clientID + "\n");
                sendMsg("OldClient/" + c.clientID);
             }
+            // 기존 방의 정보를 새로운 클라이언트에게 알림
+            for (int i = 0; i < roomVC.size(); i++) {
+               RoomInfo r = roomVC.elementAt(i);
+               textArea.append("preRoom/: " + r.roomName + "\n");
+               sendMsg("preRoom/" + r.roomName);
+            }
 
-            // 새 클라이언트 정보를 기존 클라이언트들에게 알림 ( 가입인사)
+            // 새 클라이언트 정보를 기존 클라이언트들에게 알림 (가입인사)
             broadcastMsg("NewClient/" + clientID);
-
             clientVC.add(this); // 신규 클라이언트 등록
-         } catch (IOException e) {
+         } 
+         catch (IOException e) {
             textArea.append("Error in communication: " + e.getMessage() + "\n");
          }
       }
@@ -189,8 +198,8 @@ public class Server1128 extends JFrame implements ActionListener {
       void sendMsg(String msg) {
          try {
             dos.writeUTF(msg);
-         } catch (IOException e) {
-         }
+         } 
+         catch (IOException e) { }
       }
 
       // 클라이언트로부터 데이터 수신
@@ -205,7 +214,6 @@ public class Server1128 extends JFrame implements ActionListener {
          try {
             str = dis.readUTF();
          } catch (IOException e) {
-            // TODO Auto-generated catch block
             e.printStackTrace();
          }
          textArea.append(clientID + "사용자로부터 수신한 메시지: " + str + "\n");
@@ -214,16 +222,17 @@ public class Server1128 extends JFrame implements ActionListener {
          String protocol = st.nextToken();
          String message = st.nextToken();
 
-         //log("프로토콜: " + protocol);
-         //log("내용: " + message);
+         // log("프로토콜: " + protocol);
+         // log("내용: " + message);
          
-         if ("Note".equals(protocol)) {      //11-28
+         if ("Note".equals(protocol)) {
             handleNoteProtocol(st, message);
-         } else if ("CreateRoom".equals(protocol)) {
+         } 
+         
+         else if ("CreateRoom".equals(protocol)) {
             handleCreateRoomProtocol(message);
          }
-
-      }
+      }ㄴ
       
       private void handleNoteProtocol(StringTokenizer st, String message) {
          String note = st.nextToken();
@@ -238,13 +247,11 @@ public class Server1128 extends JFrame implements ActionListener {
       }
 
       private void handleCreateRoomProtocol(String roomName) {
-
          RoomInfo r = new RoomInfo(roomName, this);
          roomVC.add(r);
          roomID = roomName;
-         sendMsg("CreateRoom/" + roomName);     // 생성 요청자에게 알림
-         broadCast("New_Room/" + roomName);     // 모두에게 알림
-         
+         sendMsg("CreateRoom/" + roomName);      // 생성 요청자에게 전송
+         broadCast("New_Room/" + roomName);      // 모든 클라이언트에게 전송
       }
       
       private void broadCast(String str) {
@@ -264,7 +271,7 @@ public class Server1128 extends JFrame implements ActionListener {
       }
    }
    
-   class RoomInfo {                                                             // 방에 있는 회원 관리
+   class RoomInfo {
       private String roomName = "";
       private Vector<ClientInfo> RoomClientVC = new Vector<ClientInfo>();
 
@@ -274,16 +281,13 @@ public class Server1128 extends JFrame implements ActionListener {
       }
 
       public void broadcastRoomMsg(String message) {
-         for (ClientInfo c : RoomClientVC) {                                    // 방에 있는 회원에게 전송
+         for (ClientInfo c : RoomClientVC) {
             c.sendMsg(message);
          }
       }
    }
 
-
    public static void main(String[] args) {
-      // TODO Auto-generated method stub
-      new Server1128();
+      new Server1205();
    }
-
 }
