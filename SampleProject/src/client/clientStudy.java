@@ -7,53 +7,54 @@ import java.util.*;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 
-public class clientStudy extends JFrame implements ActionListener, KeyListener {
-   private static final long serialVersionUID = 1L;
+public class ClientStudy extends JFrame implements ActionListener, KeyListener {
+   private static final long serialVersionUID = 2L;
+
    // Login GUI 변수
-   private JFrame Login_GUI = new JFrame("로그인");
-   private JPanel login_pane;
-   private JTextField ip_tf; // IP 택스트 필드
-   private JTextField port_tf; // port 택스트 필드
-   private JTextField id_tf; // ID 택스트 필드
-   private JButton login_btn = new JButton("접 속"); // 접속 버튼
+   private JFrame Login_GUI = new JFrame("Login");
+   private JPanel login_pane;                                     // 컴포넌트이면서 컨테이너
+   private JTextField ip_tf;                                      // Server serverIP
+   private JTextField port_tf;                                    // Server Port
+   private JTextField id_tf;                                      // Client ID
+   private JButton loginBtn;                                      // Login Button
+   private String serverIP;
+   private int serverPort;
+   private String clientID;
 
    // Main GUI 변수
    private JPanel contentPane;
    private JTextField msg_tf;
-   private boolean createRoom = false;
-   private JButton notesend_btn = new JButton("쪽지보내기");
-   private JButton joinroom_btn = new JButton("참여");
-   private JButton exitroom_btn = new JButton("탈퇴");
-   private JButton create_room_btn = new JButton("방만들기");
-   private JButton send_btn = new JButton("전송");
-   private JList<String> User_JList = new JList(); // 전체 접속자 리스트
-   private JList<String> Room_JList = new JList(); // 전체 방 목록 리스트
-   private JTextArea chatArea = new JTextArea(); // 채팅창 변수
-   private JButton chatQuit_btn = new JButton("채팅종료");
-
+   private JButton noteBtn = new JButton("쪽지보내기");
+   private JButton joinRoomBtn = new JButton("참여");
+   private JButton exitRoomBtn = new JButton("탈퇴");
+   private JButton createRoomBtn = new JButton("방만들기");
+   private JButton sendBtn = new JButton("전송");
+   private JList<String> clientJlist = new JList();                // 전체 접속자 리스트
+   private JList<String> roomJlist = new JList();                  // 전체 방 목록 리스트
+   private JTextArea chatArea = new JTextArea();                   // 채팅창 변수
+   private JButton chatQuitBtn = new JButton("채팅종료");
+   
    // network 변수
    private Socket socket;
-   private String IP;
-   private int port;
-   private String id;
-
-   // Stream 변수
-   InputStream is;
-   DataInputStream dis;
-   OutputStream os;
-   DataOutputStream dos;
+   private InputStream is;
+   private DataInputStream dis;
+   private OutputStream os;
+   private DataOutputStream dos;
 
    // 클라이언트 관리
-   Vector<String> user_list = new Vector<>(); // 가입자 목록
-   Vector<String> room_list = new Vector<>(); // 채팅방 목록
-   private String My_Room = ""; // 내가 참여한 채팅방
+   Vector<String> clientListVC = new Vector<>();                    // 가입자 목록
+   Vector<String> roomListVC = new Vector<>();                      // 채팅방 목록
+   private String myRoom = "";                                      // 내가 참여한 채팅방
+
+   // 기타
    StringTokenizer st;
+   private boolean createRoom = false;
    private boolean stopped = false;
 
-   clientStudy() {
-      initLoginGUI(); // 로그인 메뉴 화면
-      initMainGUI(); // 메인 메뉴 화면
-      connectListener(); // 리스너 연결
+   ClientStudy() {
+      initLoginGUI();                                                // 로그인 메뉴 화면
+      initMainGUI();                                                 // 메인 메뉴 화면
+      connectListener();                                             // 리스너 연결
    }
 
    private void initLoginGUI() {
@@ -69,7 +70,7 @@ public class clientStudy extends JFrame implements ActionListener, KeyListener {
       서버IP.setBounds(12, 165, 57, 15);
       this.login_pane.add(서버IP);
 
-      JLabel 서버port = new JLabel("Sever Port");
+      JLabel 서버port = new JLabel("Server Port");
       서버port.setBounds(12, 202, 69, 15);
       login_pane.add(서버port);
 
@@ -92,8 +93,8 @@ public class clientStudy extends JFrame implements ActionListener, KeyListener {
       login_pane.add(id_tf);
       id_tf.setColumns(10);
 
-      login_btn.setBounds(22, 291, 227, 23);
-      login_pane.add(login_btn);
+      loginBtn.setBounds(22, 291, 227, 23);
+      login_pane.add(loginBtn);
       Login_GUI.setVisible(true);
       this.setVisible(true);
    }
@@ -110,85 +111,84 @@ public class clientStudy extends JFrame implements ActionListener, KeyListener {
       JLabel 접속자 = new JLabel("전체 접속자");
       접속자.setBounds(12, 20, 73, 15);
       contentPane.add(접속자);
-      User_JList.setBounds(12, 45, 108, 107);
-      contentPane.add(User_JList); // 접속자 목록 JLIST
+      clientJlist.setBounds(12, 45, 108, 107);
+      contentPane.add(clientJlist);                                      // 접속자 목록 JLIST
 
-      chatQuit_btn.setBounds(12, 162, 108, 23);
-      contentPane.add(chatQuit_btn); // 채팅 종료
-      notesend_btn.setBounds(12, 192, 108, 23);
-      contentPane.add(notesend_btn); // 쪽지 보내기
+      chatQuitBtn.setBounds(12, 162, 108, 23);
+      contentPane.add(chatQuitBtn);                                    // 채팅 종료
+      noteBtn.setBounds(12, 192, 108, 23);
+      contentPane.add(noteBtn);                                    // 쪽지 보내기
 
       JLabel 채팅방 = new JLabel("채팅방목록");
       채팅방.setBounds(12, 225, 97, 15);
       contentPane.add(채팅방);
-      Room_JList.setBounds(12, 240, 108, 107);
-      contentPane.add(Room_JList); // 채팅방 목록 JLIST
+      roomJlist.setBounds(12, 240, 108, 107);
+      contentPane.add(roomJlist);                                      // 채팅방 목록 JLIST
 
-      joinroom_btn.setBounds(6, 357, 60, 23);
-      contentPane.add(joinroom_btn); // 채팅방 참여
-      joinroom_btn.setEnabled(false); // 버튼 비활성화
-      exitroom_btn.setBounds(68, 357, 60, 23);
-      contentPane.add(exitroom_btn); // 채팅방 나감
-      exitroom_btn.setEnabled(false);
-      create_room_btn.setBounds(12, 386, 108, 23);
-      contentPane.add(create_room_btn); // 채팅방 생성
+      joinRoomBtn.setBounds(6, 357, 60, 23);
+      contentPane.add(joinRoomBtn);                                    // 채팅방 참여
+      joinRoomBtn.setEnabled(false);                                 // 버튼 비활성화
+      exitRoomBtn.setBounds(68, 357, 60, 23);
+      contentPane.add(exitRoomBtn);                                    // 채팅방 나감
+      exitRoomBtn.setEnabled(false);
+      createRoomBtn.setBounds(12, 386, 108, 23);
+      contentPane.add(createRoomBtn);                                 // 채팅방 생성
 
       JScrollPane scrollPane = new JScrollPane();
       scrollPane.setBounds(142, 16, 340, 363);
       contentPane.add(scrollPane);
-      scrollPane.setViewportView(chatArea); // 채팅창
+      scrollPane.setViewportView(chatArea);                             // 채팅창
       chatArea.setEditable(false);
 
       msg_tf = new JTextField();
       msg_tf.setBounds(144, 387, 268, 21);
-      contentPane.add(msg_tf); // 대화 입력창
+      contentPane.add(msg_tf);                                          // 대화 입력창
       msg_tf.setColumns(10);
       msg_tf.setEditable(false);
-      send_btn.setBounds(412, 386, 70, 23);
-      contentPane.add(send_btn);
-      send_btn.setEnabled(false); // 메시지 전송
+      sendBtn.setBounds(412, 386, 70, 23);
+      contentPane.add(sendBtn);
+      sendBtn.setEnabled(false);                                     // 메시지 전송
       this.setVisible(false);
    }
 
    private void connectListener() {
-      login_btn.addActionListener(this); // 로그인 리스너 연결
-      notesend_btn.addActionListener(this); // 쪽지 전송 리스너
-      joinroom_btn.addActionListener(this); // 채팅방참여 리스너
-      exitroom_btn.addActionListener(this); // 채팅방탈퇴 리스너
-      create_room_btn.addActionListener(this); // 방만들기 리스너
-      send_btn.addActionListener(this); // 전송 버튼 리스너
-      //  ###
-      msg_tf.addKeyListener(this); // 메시지 전송 리스너
-      chatQuit_btn.addActionListener(this); // 채팅 종료 리스너
+      loginBtn.addActionListener(this);       // 로그인 리스너 연결
+      noteBtn.addActionListener(this);        // 쪽지 전송 리스너
+      joinRoomBtn.addActionListener(this);    // 채팅방참여 리스너
+      exitRoomBtn.addActionListener(this);    // 채팅방탈퇴 리스너
+      createRoomBtn.addActionListener(this);  // 방만들기 리스너
+      sendBtn.addActionListener(this);        // 전송 버튼 리스너
+      msg_tf.addKeyListener(this);            // 메시지 전송 리스너
+      chatQuitBtn.addActionListener(this);    // 채팅 종료 리스너
    }
 
    public void actionPerformed(ActionEvent e) {
       // 로그인버튼 클릭 ###
-      if (e.getSource() == login_btn) {
+      if (e.getSource() == loginBtn) {
          handleLoginButtonClick();
       }
       // 쪽지보내기버튼 클릭 ###
-      else if (e.getSource() == notesend_btn) {
+      else if (e.getSource() == noteBtn) {
          handleNoteSendButtonClick();
       }
       // 참여버튼 클릭 ###
-      else if (e.getSource() == joinroom_btn) {
+      else if (e.getSource() == joinRoomBtn) {
          handleJoinRoomButtonClick();
       }
       // 방만들기버튼 클릭 ###
-      else if (e.getSource() == create_room_btn) {
+      else if (e.getSource() == createRoomBtn) {
          handleCreateRoomButtonClick();
       }
       // 전송버튼 클릭 ###
-      else if (e.getSource() == send_btn) {
+      else if (e.getSource() == sendBtn) {
          handleSendButtonClick();
       }
       // 채팅종료버튼 클릭 ###
-      else if (e.getSource() == chatQuit_btn) {
+      else if (e.getSource() == chatQuitBtn) {
          handleChatQuitButtonClick();
       }
       // 탈퇴버튼 클릭 ###
-      else if (e.getSource() == exitroom_btn) {
+      else if (e.getSource() == exitRoomBtn) {
          handleExitRoomButtonClick();
       }
    }
@@ -209,9 +209,9 @@ public class clientStudy extends JFrame implements ActionListener, KeyListener {
          return;
       }
 
-      IP = ip_tf.getText().trim();
-      port = Integer.parseInt(port_tf.getText().trim());
-      id = id_tf.getText().trim();
+      serverIP = ip_tf.getText().trim();
+      serverPort = Integer.parseInt(port_tf.getText().trim());
+      clientID = id_tf.getText().trim();
       network();
    }
 
@@ -228,7 +228,7 @@ public class clientStudy extends JFrame implements ActionListener, KeyListener {
    // 쪽지보내기버튼 클릭 ###
    private void handleNoteSendButtonClick() {
       System.out.println("noteBtn clicked");
-      String user = (String) User_JList.getSelectedValue();
+      String user = (String) clientJlist.getSelectedValue();
 
       String note = JOptionPane.showInputDialog("보낼 메시지");
       if (note != null) {
@@ -240,7 +240,7 @@ public class clientStudy extends JFrame implements ActionListener, KeyListener {
    // 참여버튼 클릭 ###
    private void handleJoinRoomButtonClick() {
       System.out.println("joinRoomBtn clicked");
-      String room = (String) Room_JList.getSelectedValue();
+      String room = (String) roomJlist.getSelectedValue();
       if (room != null) {
          send_Msg("Join_Room/" + room);
       }
@@ -259,15 +259,15 @@ public class clientStudy extends JFrame implements ActionListener, KeyListener {
   }
   
   private void createOrUpdateRoomList(String roomName) {
-      Collections.sort(room_list); // 이분탐색을 위하여 벡터 정렬 ###
+      Collections.sort(roomListVC); // 이분탐색을 위하여 벡터 정렬 ###
   
       int left = 0;
-      int right = room_list.size() - 1;
+      int right = roomListVC.size() - 1;
       boolean flag = false;
   
       while (left <= right) {
           int mid = left + (right - left) / 2;
-          int compareResult = roomName.compareTo(room_list.elementAt(mid));
+          int compareResult = roomName.compareTo(roomListVC.elementAt(mid));
   
           if (compareResult == 0) {
               flag = true; break;
@@ -276,9 +276,9 @@ public class clientStudy extends JFrame implements ActionListener, KeyListener {
       }
   
       if (!flag) {
-          room_list.add(roomName);
-          Collections.sort(room_list); // 새로운 요소를 추가하고 다시 정렬합니다 ###
-          Room_JList.setListData(room_list); // 방 목록을 업데이트합니다 ###
+          roomListVC.add(roomName);
+          Collections.sort(roomListVC);       // 새로운 요소를 추가하고 다시 정렬합니다 ###
+          roomJlist.setListData(roomListVC); // 방 목록을 업데이트합니다 ###
       } else if (createRoom) {
           JOptionPane.showMessageDialog(this, "다른 방제를 사용하십쇼!", "Warning", JOptionPane.CLOSED_OPTION);
       }
@@ -287,8 +287,8 @@ public class clientStudy extends JFrame implements ActionListener, KeyListener {
   
    // 전송버튼 클릭 ###
    private void handleSendButtonClick() {
-      if (!My_Room.isEmpty()) {
-         send_Msg("Chatting/" + My_Room + "/" + msg_tf.getText().trim());
+      if (!myRoom.isEmpty()) {
+         send_Msg("Chatting/" + myRoom + "/" + msg_tf.getText().trim());
          msg_tf.setText("");
          // msg_tf에 포커스를 주어 키 입력을 받을 수 있게 함 ###
          msg_tf.requestFocus();
@@ -298,10 +298,10 @@ public class clientStudy extends JFrame implements ActionListener, KeyListener {
    // 채팅종료버튼 클릭 ###
    private void handleChatQuitButtonClick() {
       System.out.println("chatQuitBtn clicked");
-      send_Msg("chatQuit/" + My_Room);
-      user_list.removeAllElements();
-      if (!My_Room.isEmpty()) {
-         room_list.removeAllElements();
+      send_Msg("chatQuit/" + myRoom);
+      clientListVC.removeAllElements();
+      if (!myRoom.isEmpty()) {
+         roomListVC.removeAllElements();
       }
       closeSocket();
       // 프로그램 강제 종료 ###
@@ -323,14 +323,14 @@ public class clientStudy extends JFrame implements ActionListener, KeyListener {
    // 탈퇴버튼 클릭 ###
    private void handleExitRoomButtonClick() {
       System.out.println("exitRoomBtn clicked");
-      send_Msg("Exit_Room/" + My_Room);
-      My_Room = "";
-      exitroom_btn.setEnabled(false);
-      joinroom_btn.setEnabled(room_list.size() > 0);
-      create_room_btn.setEnabled(true);
+      send_Msg("Exit_Room/" + myRoom);
+      myRoom = "";
+      exitRoomBtn.setEnabled(false);
+      joinRoomBtn.setEnabled(roomListVC.size() > 0);
+      createRoomBtn.setEnabled(true);
       msg_tf.setEditable(false);
-      send_btn.setEnabled(false);
-      setTitle("사용자: " + id);
+      sendBtn.setEnabled(false);
+      setTitle("사용자: " + clientID);
    }
 
    public void keyPressed(KeyEvent e) {
@@ -338,8 +338,8 @@ public class clientStudy extends JFrame implements ActionListener, KeyListener {
 
    public void keyReleased(KeyEvent e) {
       if (e.getKeyCode() == 10) {
-         if (!My_Room.isEmpty()) {
-            send_Msg("Chatting/" + My_Room + "/" + msg_tf.getText().trim());
+         if (!myRoom.isEmpty()) {
+            send_Msg("Chatting/" + myRoom + "/" + msg_tf.getText().trim());
             msg_tf.setText("");
             // msg_tf에 포커스를 주어 키 입력을 받을 수 있게 함 ###
             msg_tf.requestFocus();
@@ -352,7 +352,7 @@ public class clientStudy extends JFrame implements ActionListener, KeyListener {
 
    private void network() {
       try {
-         socket = new Socket(IP, port);
+         socket = new Socket(serverIP, serverPort);
          if (socket != null)
             connectAndInitialize();
          System.out.println("Socket completed");
@@ -370,20 +370,19 @@ public class clientStudy extends JFrame implements ActionListener, KeyListener {
          dos = new DataOutputStream(os);
       } catch (IOException e) {
          // 예외 처리: 입출력 스트림 초기화 실패
-         e.printStackTrace();
-         // 예외 처리에 따른 적절한 조치를 취하세요.
-         return; // 예를 들어, 사용자에게 오류 메시지를 표시하고 연결을 종료할 수 있습니다.
+         e.printStackTrace();// 예외 처리에 따른 적절한 조치를 취하세요.
+         return;             // 예를 들어, 사용자에게 오류 메시지를 표시하고 연결을 종료할 수 있습니다.
       }
 
       // Main GUI 표시 및 Login GUI 숨기기
       this.setVisible(true);
       this.Login_GUI.setVisible(false);
-      setTitle("사용자: " + id);
+      setTitle("사용자: " + clientID);
 
       // 서버에 사용자 ID 알리기
-      send_Msg(id);
+      send_Msg(clientID);
       // 사용자 목록에 사용자 추가
-      user_list.add(id);
+      clientListVC.add(clientID);
 
       // 채팅 수신을 처리하는 스레드 시작
       startReceivingThread();
@@ -474,53 +473,53 @@ public class clientStudy extends JFrame implements ActionListener, KeyListener {
    }
 
    private void addUserToList(String clientID) {
-      user_list.add(clientID);
-      User_JList.setListData(user_list);
+      clientListVC.add(clientID);
+      clientJlist.setListData(clientListVC);
    }
 
    private void removeUserFromList(String clientID) {
-      user_list.remove(clientID);
-      User_JList.setListData(user_list);
+      clientListVC.remove(clientID);
+      clientJlist.setListData(clientListVC);
    }
 
    private void handleCreateRoom(String roomName) {
       msg_tf.setEditable(true);
-      send_btn.setEnabled(true);
-      My_Room = roomName;
-      joinroom_btn.setEnabled(false);
-      create_room_btn.setEnabled(false);
-      exitroom_btn.setEnabled(true);
-      setTitle("사용자: " + id + "  채팅방: " + My_Room);
-      chatArea.append(id + "님이 " + My_Room + " create and join.\n");
+      sendBtn.setEnabled(true);
+      myRoom = roomName;
+      joinRoomBtn.setEnabled(false);
+      createRoomBtn.setEnabled(false);
+      exitRoomBtn.setEnabled(true);
+      setTitle("사용자: " + clientID + "  채팅방: " + myRoom);
+      chatArea.append(clientID + "님이 " + myRoom + " create and join.\n");
    }
 
    private void handleJoinRoom(String roomName) {
       msg_tf.setEditable(true);
-      send_btn.setEnabled(true);
-      joinroom_btn.setEnabled(false);
-      create_room_btn.setEnabled(false);
-      My_Room = roomName;
-      exitroom_btn.setEnabled(true);
-      setTitle("사용자: " + id + "   채팅방: " + My_Room);
-      chatArea.append(id + "님이 " + My_Room + " join.\n");
+      sendBtn.setEnabled(true);
+      joinRoomBtn.setEnabled(false);
+      createRoomBtn.setEnabled(false);
+      myRoom = roomName;
+      exitRoomBtn.setEnabled(true);
+      setTitle("사용자: " + clientID + "   채팅방: " + myRoom);
+      chatArea.append(clientID + "님이 " + myRoom + " join.\n");
       showInfoMessage("joinRoom success", "알림");
    }
 
    private void handleRoomListUpdate(String roomList) {
-      if (My_Room.equals("")) {
-         joinroom_btn.setEnabled(true);
+      if (myRoom.equals("")) {
+         joinRoomBtn.setEnabled(true);
       }
-      room_list.add(roomList);
-      Room_JList.setListData(room_list);
+      roomListVC.add(roomList);
+      roomJlist.setListData(roomListVC);
    }
 
    private void handleServerShutdown() {
       stopped = true;
       try {
          socket.close();
-         user_list.removeAllElements();
-         if (!My_Room.isEmpty()) {
-            room_list.removeAllElements();
+         clientListVC.removeAllElements();
+         if (!myRoom.isEmpty()) {
+            roomListVC.removeAllElements();
          }
       } catch (IOException e) {
          e.printStackTrace();
@@ -530,9 +529,9 @@ public class clientStudy extends JFrame implements ActionListener, KeyListener {
 
    private void handleRoomOut(String roomName) {
       System.out.println("Room Out");
-      room_list.remove(roomName);
-      if (room_list.isEmpty()) {
-         joinroom_btn.setEnabled(false);
+      roomListVC.remove(roomName);
+      if (roomListVC.isEmpty()) {
+         joinRoomBtn.setEnabled(false);
       }
    }
 
@@ -553,14 +552,14 @@ public class clientStudy extends JFrame implements ActionListener, KeyListener {
    }
 
    private void updateUserList() {
-      User_JList.setListData(user_list);
+      clientJlist.setListData(clientListVC);
    }
 
    private void updateRoomList() {
-      Room_JList.setListData(room_list);
+      roomJlist.setListData(roomListVC);
    }
 
    public static void main(String[] args) {
-      new clientStudy();
+      new ClientStudy();
    }
 }

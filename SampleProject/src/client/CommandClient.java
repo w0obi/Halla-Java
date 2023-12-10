@@ -28,7 +28,7 @@ import javax.swing.JTextField;
 import javax.swing.border.EmptyBorder;
 
 //클라이언트 GUI, 네트워크
-public class client1208 extends JFrame implements ActionListener {
+public class CommandClient extends JFrame implements ActionListener {
    private static final long serialVersionUID = 2L;   //직렬화 버전 명시
    // Login GUI 변수
    private JFrame Login_GUI = new JFrame("Login"); // 11-19
@@ -70,7 +70,7 @@ public class client1208 extends JFrame implements ActionListener {
    // 기타
    StringTokenizer st;
 
-   public client1208() {   //생성
+   public CommandClient() {   //생성
       initializeLoginGUI();   //login GUI 생성
       initializeMainGUI();   //main GUI 생성
       addActionListeners(); // 액션 리스너   11-13
@@ -400,7 +400,7 @@ public class client1208 extends JFrame implements ActionListener {
 
    //main 메서드
    public static void main(String[] args) {
-      new client1208();
+      new CommandClient();
    }
 
 }

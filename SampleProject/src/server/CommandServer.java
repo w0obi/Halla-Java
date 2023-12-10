@@ -27,7 +27,7 @@ import javax.swing.border.EmptyBorder;
 //import server.server.UserInfo;
 
 //[JFrame]창 액션 리스너
-public class server1208 extends JFrame implements ActionListener {
+public class CommandServer extends JFrame implements ActionListener {
    private static final long serialVersionUID = 1L;   //직렬화 버전 명시
    //GUI 구성
    private JPanel contentPane;
@@ -46,7 +46,7 @@ public class server1208 extends JFrame implements ActionListener {
    private Vector<RoomInfo> roomVC = new Vector<RoomInfo>();   //방 정보 관리
    
    
-   public server1208() {   //생성자 객체 (초기화)
+   public CommandServer() {   //생성자 객체 (초기화)
       initializeGUI();   //GUI를 초기화
       setupActionListeners(); //액션 리스너를 설정하는 초기화  11-13
    }
@@ -297,7 +297,7 @@ public class server1208 extends JFrame implements ActionListener {
 
    public static void main(String[] args) {
       // TODO Auto-generated method stub
-      new server1208();
+      new CommandServer();
    }
 
 }

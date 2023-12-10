@@ -52,7 +52,7 @@ public class oldClient {
       frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
       frame.getContentPane().setLayout(null);
       
-      ImageIcon im = new ImageIcon("C:\\Users\\hakyp\\Documents\\카카오톡 받은 파일\\네트워크프로그래밍\\람쥐1.jpg");
+      ImageIcon im = new ImageIcon("images/다람쥐.jpg");
       JLabel laim = new JLabel(im);//라벨에 이미지 달아주기
       laim.setBounds(0, 0, 550, 310);
       frame.getContentPane().add(laim);

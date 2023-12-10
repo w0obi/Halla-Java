@@ -8,7 +8,7 @@ import java.util.*;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 
-public class serverStudy extends JFrame implements ActionListener {
+public class ServerStudy extends JFrame implements ActionListener {
 
    private static final long serialVersionUID = 2L;
    private JPanel contentPane;
@@ -29,7 +29,7 @@ public class serverStudy extends JFrame implements ActionListener {
    StringTokenizer st;
    private boolean stopServer = true;
 
-   serverStudy() {
+   ServerStudy() {
       initGUI(); // GUI 초기화, 화면 생성
       connectListener(); // 리스너 설정 메소드
    }
@@ -416,6 +416,6 @@ public class serverStudy extends JFrame implements ActionListener {
    }// 액션 이벤트 끝
 
    public static void main(String[] args) {
-      new serverStudy();
+      new ServerStudy();
    }
 }
