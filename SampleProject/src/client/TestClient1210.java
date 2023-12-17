@@ -8,7 +8,9 @@ import java.net.Socket;
 import java.util.*;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
-
+/**
+ * 231212 서버IP주소를 Wi-Fi 번호로 이용시 서로 통신이 가능함
+ */
 public class TestClient1210 extends JFrame implements ActionListener, KeyListener {
    private static final long serialVersionUID = 2L;
    // Login GUI 변수
@@ -67,7 +69,7 @@ public class TestClient1210 extends JFrame implements ActionListener, KeyListene
       loginGUI.setLocationRelativeTo(null); // 화면 중앙에 배치
       loginGUI.setContentPane(loginJpanel);   // 1
       loginJpanel.setLayout(null);
-      ImageIcon backgroundImage = new ImageIcon("images/hallaImage.png"); // 이미지 파일 경로로 변경
+      ImageIcon backgroundImage = new ImageIcon("images/halla.jpg"); // 이미지 파일 경로로 변경
       backgroundLabel = new JLabel(backgroundImage);
       backgroundLabel.setBounds(0, 0, 380, 240);
       loginJpanel.add(backgroundLabel);

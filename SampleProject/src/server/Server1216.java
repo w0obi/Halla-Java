@@ -1,16 +1,21 @@
 package server;
 
+import java.awt.*;
 import java.awt.event.*;
-import java.io.*;
-import java.net.*;
-import java.util.*;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.net.ServerSocket;
+import java.net.Socket;
+import java.util.StringTokenizer;
+import java.util.Vector;
+
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 
-/**
- * 231210 이후 수정 사항 없음
- */
-public class TestServer1210 extends JFrame implements ActionListener {
+public class Server1216 extends JFrame implements ActionListener {
    private static final long serialVersionUID = 1L;
    private JPanel contentPane;
    private JTextField port_tf;
@@ -18,64 +23,66 @@ public class TestServer1210 extends JFrame implements ActionListener {
    private JButton startBtn = new JButton("서버 실행");
    private JButton stopBtn = new JButton("서버 중지");
 
-   // socket 생성 연결 부분
-   private ServerSocket ss; // server socket
-   private Socket cs;       // client socket
-   int port = 12345;
+   // 소켓 생성 및 연결 부분
+   private ServerSocket serverSocket; // 서버 소켓
+   private Socket cs; // 클라이언트 소켓
+   private int port = 12345; // 기본 포트 번호
 
    // 기타 변수 관리
    private Vector<ClientInfo> clientVC = new Vector<ClientInfo>();
    private Vector<RoomInfo> roomVC = new Vector<RoomInfo>();
 
-   public TestServer1210() {
+   public Server1216() {
       initializeGUI();
-      setupActionListeners(); // 11-13
+      setupActionListeners();
    }
 
    public void initializeGUI() {
       setTitle("Server Application");
-
       setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
       setBounds(30, 100, 321, 370);
+
       contentPane = new JPanel();
       contentPane.setBorder(new EmptyBorder(5, 5, 5, 5));
       setContentPane(contentPane);
-      contentPane.setLayout(null);
+      contentPane.setLayout(new BorderLayout()); // 레이아웃 변경
+
+      JPanel topPanel = new JPanel();
+      contentPane.add(topPanel, BorderLayout.NORTH);
 
       JLabel lblNewLabel_2 = new JLabel("포트 번호");
-      lblNewLabel_2.setBounds(12, 245, 57, 15);
-      contentPane.add(lblNewLabel_2);
+      topPanel.add(lblNewLabel_2);
 
       port_tf = new JTextField();
-      port_tf.setBounds(81, 242, 212, 21);
-      contentPane.add(port_tf);
-      port_tf.setColumns(10);
+      port_tf.setColumns(20);
+      topPanel.add(port_tf);
+
+      JPanel bottomPanel = new JPanel();
+      contentPane.add(bottomPanel, BorderLayout.SOUTH);
 
       startBtn.setBounds(12, 286, 138, 23);
-      contentPane.add(startBtn);
-
-      JScrollPane scrollPane = new JScrollPane();
-      scrollPane.setBounds(12, 10, 281, 210);
-      contentPane.add(scrollPane);
-
-      scrollPane.setViewportView(textArea);
-      textArea.setEditable(false);
+      bottomPanel.add(startBtn);
 
       stopBtn.setBounds(155, 286, 138, 23);
-      contentPane.add(stopBtn);
+      bottomPanel.add(stopBtn);
       stopBtn.setEnabled(false);
 
-      setLocationRelativeTo(null);  // 화면 중앙에 배치 ###
-      this.setVisible(true);        // 화면 보이기
+      JScrollPane scrollPane = new JScrollPane();
+      contentPane.add(scrollPane, BorderLayout.CENTER);
+
+      textArea.setEditable(false);
+      scrollPane.setViewportView(textArea);
+
+      this.setVisible(true); // 화면 보이기
    }
 
-   void setupActionListeners() {      // 11-13
-      startBtn.addActionListener(this);
-      stopBtn.addActionListener(this);
+   void setupActionListeners() {
+      startBtn.addActionListener(e -> startServer());
+      stopBtn.addActionListener(e -> stopServer());
    }
 
    @Override
-   public void actionPerformed(ActionEvent e) {
+   public void actionPerformed(ActionEvent e) { // 삭제 가능
       if (e.getSource() == startBtn) {
          startServer(); // 11-13
 
@@ -84,59 +91,64 @@ public class TestServer1210 extends JFrame implements ActionListener {
       }
    }
 
-   private void startServer() { // 11-13
+   private void startServer() {
       try {
          port = Integer.parseInt(port_tf.getText().trim());
-         ss = new ServerSocket(port);
-         textArea.append("Server started on port: " + port + "\n");
+         serverSocket = new ServerSocket(port);
+         textArea.append("서버가 포트 " + port + "에서 시작되었습니다.\n");
          startBtn.setEnabled(false);
          port_tf.setEditable(false);
          stopBtn.setEnabled(true);
          waitForClientConnection();
       } catch (NumberFormatException e) {
-         textArea.append("Invalid port number.\n");
+         textArea.append("잘못된 포트 번호입니다.\n");
       } catch (IOException e) {
-         textArea.append("Error starting server: " + e.getMessage() + "\n");
+         textArea.append("서버 시작 오류: " + e.getMessage() + "\n");
       }
    }
 
-   private void stopServer() { // 11-21
-
-      // 서버 종료 시 모든 클라이언트에게 알림
+   private void stopServer() {
+      // 연결된 모든 클라이언트에게 서버 종료 알림
       for (ClientInfo c : clientVC) {
          c.sendMsg("ServerShutdown/Bye");
          try {
             c.closeStreams();
-         } catch (IOException e1) {
-            e1.printStackTrace();
+         } catch (IOException e) {
+            e.printStackTrace(); // 스트림 닫기 실패 시 예외 출력
          }
       }
 
+      // 서버 소켓 닫기
       try {
-         ss.close();
+         if (serverSocket != null && !serverSocket.isClosed()) {
+            serverSocket.close();
+         }
          roomVC.removeAllElements();
-      } catch (IOException e1) {
-         e1.printStackTrace();
+      } catch (IOException e) {
+         e.printStackTrace(); // serverSocket 닫기 실패 시 예외 출력
       }
 
+      // UI 컴포넌트 상태 업데이트
       startBtn.setEnabled(true);
       port_tf.setEditable(true);
       stopBtn.setEnabled(false);
-
    }
 
    private void waitForClientConnection() {
       new Thread(() -> {
          try {
-            while (true) { // 11-22
+            while (!serverSocket.isClosed()) { // serverSocket이 닫힐 때까지 반복
                textArea.append("클라이언트 Socket 접속 대기중\n");
-               cs = ss.accept(); // cs를 분실하면 클라이언트와 통신이 불가능
-               textArea.append("클아이언트 Socket 접속 완료\n");
-               ClientInfo client = new ClientInfo(cs);
+               Socket clientSocket = serverSocket.accept(); // 클라이언트 연결 수락
+               textArea.append("클라이언트 Socket 접속 완료\n");
+
+               ClientInfo client = new ClientInfo(clientSocket);
                client.start();
             }
          } catch (IOException e) {
-            textArea.append("Error accepting client connection: " + e.getMessage() + "\n");
+            if (!serverSocket.isClosed()) {
+               textArea.append("클라이언트 연결 수락 중 오류 발생: " + e.getMessage() + "\n");
+            }
          }
       }).start();
    }
@@ -146,17 +158,18 @@ public class TestServer1210 extends JFrame implements ActionListener {
       private DataOutputStream dos;
       private Socket clientSocket;
       private String clientID = ""; // client ID
-      private String roomID = "";   // 11-28
+      private String roomID = ""; // 11-28
 
       public ClientInfo(Socket socket) {
          try {
             this.clientSocket = socket;
             dis = new DataInputStream(clientSocket.getInputStream());
             dos = new DataOutputStream(clientSocket.getOutputStream());
+            dupAndInitNewClient();
          } catch (IOException e) {
             textArea.append("Error in communication: " + e.getMessage() + "\n");
          }
-         clientCom();
+
       }
 
       // 클라이언트로부터 데이터 수신
@@ -173,11 +186,10 @@ public class TestServer1210 extends JFrame implements ActionListener {
          }
       }
 
-      private void clientCom() {
+      private void dupAndInitNewClient() {
          while (true) {
             try {
-               // 클라이언트로부터 ID 수신
-               clientID = dis.readUTF();
+               clientID = dis.readUTF(); // 클라이언트로부터 ID 수신
 
                // 중복 클라이언트 ID 검사
                boolean isDuplicate = false;
@@ -206,7 +218,7 @@ public class TestServer1210 extends JFrame implements ActionListener {
                      sendMsg("OldClient/" + c.clientID);
                   }
 
-                  // 중복이 아닌 경우 새 클라이언트 정보를 기존 클라이언트들에게 알림 (가입인사)
+                  // 새로운 클라이언트 정보가 중복되지 않는 경우, 해당 정보를 기존 클라이언트들에게 알림니다. (가입인사)
                   broadCast("NewClient/" + clientID);
 
                   // 자신에게 기존의 개설된 채팅 방 정보 전송
@@ -220,7 +232,8 @@ public class TestServer1210 extends JFrame implements ActionListener {
                   break;
                }
             } catch (IOException e) {
-               textArea.append("Error in communication: " + e.getMessage() + "\n");
+               textArea.append("통신 중 오류 발생: " + e.getMessage() + "\n");
+               break; // 오류 발생 시 반복문 종료
             }
          }
       }
@@ -235,38 +248,47 @@ public class TestServer1210 extends JFrame implements ActionListener {
 
       public void recvMsg(String str) { // 11-21
 
-         textArea.append(clientID + "사용자로부터 수신한 메시지: " + str + "\n");
-         System.out.println(clientID + "사용자로부터 수신한 메시지: " + str);
+         textArea.append(clientID + " 사용자로부터 수신한 메시지: " + str + "\n");
+         System.out.println(clientID + " 사용자로부터 수신한 메시지: " + str);
          StringTokenizer st = new StringTokenizer(str, "/");
          String protocol = st.nextToken();
-         String message = st.nextToken();
-
-         if ("Note".equals(protocol)) { // 11-28
-            handleNoteProtocol(st, message);
-         } else if ("CreateRoom".equals(protocol)) {
-            handleCreateRoomProtocol(message);
-
-         } else if ("JoinRoom".equals(protocol)) {
-            handleJoinRoomProtocol(st, message);
-         } else if ("SendMsg".equals(protocol)) {
-            handleSendMsgProtocol(st, message);
-         } else if ("ClientExit".equals(protocol)) { // System.out.println("ClientExit/Bye" + clientID);
-            handleClientExitProtocol();
-         } else if ("ExitRoom".equals(protocol)) {
-            handleExitRoomProtocol(message);
-         } else {
-            log("알 수 없는 프로토콜: " + protocol);
+         String message = "";
+         if (st.hasMoreTokens()) {
+            message = st.nextToken();
          }
 
+         switch (protocol) {
+         case "Note":
+            handleNoteProtocol(st, message);
+            break;
+         case "CreateRoom":
+            handleCreateRoomProtocol(message);
+            break;
+         case "JoinRoom":
+            handleJoinRoomProtocol(st, message);
+            break;
+         case "SendMsg":
+            handleSendMsgProtocol(st, message);
+            break;
+         case "ClientExit":
+            handleClientExitProtocol();
+            break;
+         case "ExitRoom":
+            handleExitRoomProtocol(message);
+            break;
+         default:
+            log("알 수 없는 프로토콜: " + protocol);
+            break;
+         }
       }
 
-      private void handleNoteProtocol(StringTokenizer st, String message) {
+      private void handleNoteProtocol(StringTokenizer st, String recipientID) {
          String note = st.nextToken();
 
          // 해당 사용자에게 쪽지 전송
          for (ClientInfo c : clientVC) {
-            if (c.clientID.equals(message)) {
-               c.sendMsg("NoteS/" + clientID + "/" + note);
+            if (c.clientID.equals(recipientID)) {
+               c.sendMsg("Note/" + clientID + "/" + note);
                break;
             }
          }
@@ -289,12 +311,12 @@ public class TestServer1210 extends JFrame implements ActionListener {
             RoomInfo r = new RoomInfo(roomName, this);
             roomVC.add(r);
             roomID = roomName;
-            sendMsg("CreateRoom/" + roomID); // 생성 요청자에게 전송
-            broadCast("NewRoom/" + roomID); // 모든 클라이언트들에게
+            sendMsg("CreateRoom/" + roomName); // 생성 요청자에게 전송
+            broadCast("NewRoom/" + roomName); // 모든 클라이언트들에게
             broadCast("RoomJlistUpdate/Update"); // zzz2
 
          }
-         // sendMsg("RoomJlistUpdate/Update"); //12-5
+
       }
 
       private void handleJoinRoomProtocol(StringTokenizer st, String roomName) { // 12-01-1
@@ -302,8 +324,8 @@ public class TestServer1210 extends JFrame implements ActionListener {
             if (r.roomName.equals(roomName)) {
                r.broadcastRoomMsg("JoinRoomMsg/가입/***" + clientID + "님이 입장하셨습니다.********");
                r.RoomClientVC.add(this);
-               roomID = roomName;
-               sendMsg("JoinRoom/" + roomID);
+               roomID = roomName; // RoomName -->RoomID 변경 필요
+               sendMsg("JoinRoom/" + roomName);
                break;
             }
          }
@@ -320,24 +342,24 @@ public class TestServer1210 extends JFrame implements ActionListener {
 
       private void handleClientExitProtocol() {
          try {
-            closeStreams();
-            clientVC.remove(this);
+            closeStreams(); // 스트림을 닫습니다.
+            clientVC.remove(this); // 클라이언트 벡터에서 현재 클라이언트를 제거합니다.
             if (clientSocket != null && !clientSocket.isClosed()) {
-               clientSocket.close();
+               clientSocket.close(); // 클라이언트 소켓이 열려있는 경우, 닫습니다.
                textArea.append("Client socket closed.\n");
             }
 
-            broadCast("ClientExit/" + clientID);
-            broadCast("ClientJlistUpdate/Update");
+            broadCast("ClientExit/" + clientID); // 모든 클라이언트에게 클라이언트의 종료를 알립니다.
+            broadCast("ClientJlistUpdate/Update"); // 클라이언트 목록 업데이트를 알립니다.
 
          } catch (IOException e) {
-            logError("사용자 로그아웃 중 오류 발생", e);
+            logError("사용자 로그아웃 중 오류 발생", e); // 로그아웃 중 발생한 오류를 기록합니다.
          }
       }
 
       private void handleExitRoomProtocol(String roomName) {
          roomID = roomName;
-         log(clientID + " 사용자가 " + roomID + " 방에서 나감");
+         log(clientID + " 사용자가 " + roomName + " 방에서 나감");
 
          for (RoomInfo r : roomVC) {
             if (r.roomName.equals(roomName)) {
@@ -400,6 +422,7 @@ public class TestServer1210 extends JFrame implements ActionListener {
    }
 
    public static void main(String[] args) {
-      new TestServer1210();
+      // TODO Auto-generated method stub
+      new Server1216();
    }
 }
