@@ -398,7 +398,7 @@ public class TestClient1210 extends JFrame implements ActionListener, KeyListene
    }
 
    private void showMessageBox(String msg, String title) {
-      JOptionPane.showMessageDialog(null, msg, title, JOptionPane.CLOSED_OPTION);
+      JOptionPane.showMessageDialog(this, msg, title, JOptionPane.CLOSED_OPTION);
    }
 
    private void addClientToList(String clientID) {
@@ -475,7 +475,7 @@ public class TestClient1210 extends JFrame implements ActionListener, KeyListene
    }
 
    private void showErrorMessage(String message, String title) {
-      JOptionPane.showMessageDialog(null, message, title, JOptionPane.ERROR_MESSAGE);
+      JOptionPane.showMessageDialog(this, message, title, JOptionPane.ERROR_MESSAGE);
    }
 
    private void appendToChatArea(String message) {
@@ -483,7 +483,7 @@ public class TestClient1210 extends JFrame implements ActionListener, KeyListene
    }
 
    private void showInfoMessage(String message, String title) {
-      JOptionPane.showMessageDialog(null, message, title, JOptionPane.INFORMATION_MESSAGE);
+      JOptionPane.showMessageDialog(this, message, title, JOptionPane.INFORMATION_MESSAGE);
    }
 
    @Override
@@ -512,7 +512,7 @@ public class TestClient1210 extends JFrame implements ActionListener, KeyListene
       System.out.println("noteBtn clicked");
       String dstClient = (String) clientJlist.getSelectedValue();
 
-      String note = JOptionPane.showInputDialog("보낼 메시지");
+      String note = JOptionPane.showInputDialog(this, "보낼 메시지", "Send Message", JOptionPane.DEFAULT_OPTION);
       if (note != null) {
          sendMsg("Note/" + dstClient + "/" + note);
          System.out.println("receiver : " + dstClient + " | 전송 노트 : " + note);
@@ -522,7 +522,7 @@ public class TestClient1210 extends JFrame implements ActionListener, KeyListene
    private void handleCreateRoomButtonClick() {
       System.out.println("createRoomBtn clicked");
 
-      String roomName = JOptionPane.showInputDialog("Enter Room Name:");
+      String roomName = JOptionPane.showInputDialog(this, "Enter Room Name:", "Create Room", JOptionPane.DEFAULT_OPTION);
       if (roomName == null || roomName.trim().isEmpty()) {
          System.out.println("Room creation cancelled or no name entered");
          return;
